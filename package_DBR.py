@@ -141,24 +141,24 @@ def LL_RT(MV, Kp, Tlead, Tlag, Ts, PV, PVInit=0, method='EBD'):
         return
 
     if (Tlag != 0):
-        u_k_plus_1 = MV[-1] 
-        u_k = MV[-2] 
+        x_k_plus_1 = MV[-1] 
+        x_k = MV[-2] 
         y_k = PV[-1]    
 
         if method == 'EBD':
             den = Tlag + Ts
-            PV.append((Tlag/den)*y_k + (Kp*(Tlead+Ts)/den)*u_k_plus_1 - (Kp*Tlead/den)*u_k)
+            PV.append((Tlag/den)*y_k + (Kp*(Tlead+Ts)/den)*x_k_plus_1 - (Kp*Tlead/den)*x_k)
             
         elif method == 'EFD':
             
-            PV.append((1 - Ts/Tlag)*y_k + (Kp*Ts/Tlag)*u_k + (Kp*Tlead/Tlag)*(u_k_plus_1 - u_k))
+            PV.append((1 - Ts/Tlag)*y_k + (Kp*Ts/Tlag)*x_k + (Kp*Tlead/Tlag)*(x_k_plus_1 - x_k))
             
         elif method == 'TRAP':
             d = 2*Tlag + Ts
             a = (2*Tlag - Ts) / d
             b = Kp * (2*Tlead + Ts) / d
             c = Kp * (Ts - 2*Tlead) / d
-            PV.append(a*y_k + b*u_k_plus_1 + c*u_k)
+            PV.append(a*y_k + b*x_k_plus_1 + c*x_k)
     else:
         val = Kp * MV[-1]
         if len(MV) > 1:
