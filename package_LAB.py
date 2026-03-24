@@ -89,4 +89,33 @@ def IMC_Tuning(Kp, T1, theta, T2=0, tauc=None, model='FOPDT'):
         Td = (T1 * T2) / (T1 + T2) if (T1 + T2) != 0 else 0
         
     return Kc, Ti, Td
+
+
+import numpy as np
+
+def Margin(Kp, Tp1, Tp2, thetap, Kc, Ti, Td, alpha, omega):
+    """
+    Calcule les marges de Gain (GM) et de Phase (PM)
+    L(s) = C(s) * P(s)
+    """
+    s = 1j * omega
+    P = (Kp * np.exp(-thetap * s)) / ((Tp1 * s + 1) * (Tp2 * s + 1))
+    C = Kc * (1 + 1/(Ti * s) + (Td * s) / (alpha * Td * s + 1))
+    
+    L = P * C
+    
+    gain = np.abs(L)
+    phase = np.angle(L, deg=True)
+
+    idx_wc = np.argmin(np.abs(gain - 1))
+    wc = omega[idx_wc]
+    PM = 180 + phase[idx_wc]
+    
+    idx_w180 = np.argmin(np.abs(phase + 180))
+    w180 = omega[idx_w180]
+    GM = 1 / gain[idx_w180]
+    GM_db = 20 * np.log10(GM)
+    
+    return GM, PM, wc, w180
+
     
