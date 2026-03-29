@@ -209,22 +209,40 @@ def Margin(Kp, Tp1, Tp2, thetap, Kc, Ti, Td, alpha, omega):
     Typical stability criteria: 5 (14 dB) > GM > 1.7 (5 dB) and 60° > PM > 30°.
     """
     s = 1j * omega
+    
     P = (Kp * np.exp(-thetap * s)) / ((Tp1 * s + 1) * (Tp2 * s + 1))
     C = Kc * (1 + 1/(Ti * s) + (Td * s) / (alpha * Td * s + 1))
     
     L = P * C
     
     gain = np.abs(L)
-    phase = np.angle(L, deg=True)
+    phase = np.unwrap(np.angle(L)) * 180 / np.pi
 
-    idx_wc = np.argmin(np.abs(gain - 1))
-    wc = omega[idx_wc]
-    PM = 180 + phase[idx_wc]
+    idx_wc = np.where(np.diff(np.sign(gain - 1)))[0]
     
-    idx_w180 = np.argmin(np.abs(phase + 180))
-    w180 = omega[idx_w180]
-    GM = 1 / gain[idx_w180]
-    GM_db = 20 * np.log10(GM)
+    if len(idx_wc) > 0:
+        i = idx_wc[0]
+        log_w = np.log10(omega[i]) + (np.log10(omega[i+1]) - np.log10(omega[i])) * \
+                (0 - 20*np.log10(gain[i])) / (20*np.log10(gain[i+1]) - 20*np.log10(gain[i]))
+        wc = 10**log_w
+        
+        phase_wc = np.interp(wc, omega, phase)
+        PM = 180 + phase_wc
+    else:
+        wc = np.nan
+        PM = np.inf
+
+    idx_w180 = np.where(np.diff(np.sign(phase + 180)))[0]
+    
+    if len(idx_w180) > 0:
+        j = idx_w180[0]
+        w180 = omega[j] + (omega[j+1] - omega[j]) * \
+               (-180 - phase[j]) / (phase[j+1] - phase[j])
+        gain_w180 = np.interp(w180, omega, gain)
+        GM = 1 / gain_w180
+    else:
+        w180 = np.nan
+        GM = np.inf
     
     return GM, PM, wc, w180
 
